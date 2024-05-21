@@ -255,6 +255,7 @@ namespace MaxAspLab
             var app = builder.Build();
 
             //------------------------------------------------------------------------------
+            //swagger не удалось настроить, к следующей лабе постараюсь это исправить
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -262,16 +263,22 @@ namespace MaxAspLab
             }
             app.MapGet("/", async (context) =>
             {
-                string a = context.Request.Query["string"];
-                string choice = context.Request.Query["choice"];
+                string a = context.Request.Query["string"];//querry параметр строка на ввод
+                string choice = context.Request.Query["choice"];//querry параметр выбор сортировки: 1-быстрая 2 -деревом
 
 
                 Base(context, a, choice);
             });
-            app.MapGet("/jopa", () => "Hell");
+
 
 
             app.Run();
+            Console.WriteLine();
+            Console.WriteLine();
+
+
+
+        
         }
     }
 }
