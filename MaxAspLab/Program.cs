@@ -2,6 +2,8 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MaxAspLab
 {
@@ -57,14 +59,14 @@ namespace MaxAspLab
     {
         static WebOut webOut = new WebOut();
         //метод рандомных чисел
-        async static Task HttpRand( string str)
+        async static Task HttpRand( string str, FileJson data)
         {
             int length = str.Length - 1;
             try
             {
                 using (var client = new HttpClient())
                 {
-                    string url = string.Format("http://www.randomnumberapi.com/api/v1.0/random?min=0&max={0}&count=1", length);
+                    string url = string.Format("{1}?min=0&max={0}&count=1", length, data.RandomApi);
                     using HttpResponseMessage response = await client.GetAsync(url);
                     string content = await response.Content.ReadAsStringAsync();
 
@@ -180,6 +182,9 @@ namespace MaxAspLab
                 char[] str = new char[a.Length];
                 for (int i = 0; i < a.Length; i++)
                     str[i] = a[i];
+                string filepath = @"appsettings.json";
+                var json = File.ReadAllText(filepath);
+                var data = JsonSerializer.Deserialize<FileJson>(json);
                 string output = "";
                 string exept = "";
                 //была ошибка в ограничении for
@@ -191,59 +196,78 @@ namespace MaxAspLab
                 }
                 if (String.IsNullOrEmpty(exept))
                 {
-
-                    if (a.Length % 2 == 0)
+                    string[] blacklist = data.Settings.Blacklist;
+                    bool flag = false;
+                    for (int i = 0; i < blacklist.Length; i++)
                     {
-                        string b = a.Substring(0, a.Length / 2);
-                        char[] bc = b.ToCharArray();
-                        Array.Reverse(bc);
-                        a = a.Substring(a.Length / 2);
-                        char[] ac = a.ToCharArray();
-                        Array.Reverse(ac);
-                        output = String.Concat<char>(bc) + String.Concat<char>(ac);
-                        webOut.st1 = output;
-                        //Console.WriteLine(output);
-                        let(output);
+                        if (a.Contains(blacklist[i]))
+                            flag = true;
+                    }
+                    if (!flag)
+                    {
+
+                        if (a.Length % 2 == 0)
+                        {
+                            string b = a.Substring(0, a.Length / 2);
+                            char[] bc = b.ToCharArray();
+                            Array.Reverse(bc);
+                            a = a.Substring(a.Length / 2);
+                            char[] ac = a.ToCharArray();
+                            Array.Reverse(ac);
+                            output = String.Concat<char>(bc) + String.Concat<char>(ac);
+                            webOut.st1 = output;
+                            //Console.WriteLine(output);
+                            let(output);
 
 
-                        glas(output);
+                            glas(output);
+                        }
+                        else
+                        {
+                            char[] b = a.ToCharArray();
+                            Array.Reverse(b);
+                            output = String.Concat<char>(b) + a;
+                            webOut.st1 = output;
+
+                            let(output);
+                            glas(output);
+
+                        }
+
+
+
+
+
+
+                        switch (sw)
+                        {
+                            case "1":
+                                webOut.sortST = QuickSort(str, 0, str.Length - 1);
+                                break;
+                            case "2":
+                                webOut.sortST = TreeSort(str);
+                                break;
+
+                        }
+
+                        HttpRand(output, data);
+
+                        await context.Response.WriteAsJsonAsync(webOut);
                     }
                     else
                     {
-                        char[] b = a.ToCharArray();
-                        Array.Reverse(b);
-                        output = String.Concat<char>(b) + a;
-                        webOut.st1 = output;
-
-                        let(output);
-                        glas(output);
-
+                        context.Response.StatusCode = 400;
+                        await context.Response.WriteAsync($"not walid");
                     }
                 }
                 else
                 {
                     context.Response.StatusCode = 400;
-                    await context.Response.WriteAsync($"использованы недопустимые значения {exept}");
+                    await context.Response.WriteAsync($"not walid {exept}");
 
                 }
-
-
-
-                switch (sw)
-                {
-                    case "1":
-                        webOut.sortST = QuickSort(str, 0, str.Length - 1);
-                        break;
-                    case "2":
-                        webOut.sortST = TreeSort(str);
-                        break;
-
-                }
-
-                HttpRand(output);
-
-                await context.Response.WriteAsJsonAsync(webOut);
             }
+
             catch (Exception ex) { }
         }
 
